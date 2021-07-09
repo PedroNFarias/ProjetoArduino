@@ -1,43 +1,52 @@
-//Programa : Relogio com Arduino, DS1307 e Display 7 Seg
+//Programa = Relogio com Arduino, DS1307 e Display 7 Seg
 
 #include "Wire.h"
 #include <LedControl.h>
 
-#define DS1307_ADDRESS 0x68
-//controle do LED
-LedControl led(A3, A5, A4, 1);
+LedControl led(A3, A1, A2, 1);
+const byte DisplayCi = 0, ButtonSet = 2, ButtonUp = 3, ButtonDown = 4, Speaker = 5;
 
-//variáveis do Display, botões e speaker
-const byte displayCi = 0, ButtonSet = 2, ButtonUp = 3, ButtonDown = 4, Speaker = 5;
+#define DS1307_ADDRESS 0x68
 
 int valor = 0;
 
 byte zero = 0x00;
 unsigned long timer;
+
 void setup()
 {
     Wire.begin();
-    //A linha abaixo pode ser retirada apos setar a data e hora
-    SelecionaDataeHora();
-    timer = millis();
-    led.shutdown(CI, false);
-    led.setIntensity(CI, 8);
+    led.shutdown(DisplayCi, false);
+    led.setIntensity(DisplayCi, 8);
     for (byte i = 2; i < 5; i++)
         pinMode(i, INPUT_PULLUP);
     pinMode(Speaker, OUTPUT);
+    //A linha abaixo pode ser retirada apos setar a data e hora
+    SelecionaDataeHora();
+
+    //Define o numero de digitos do display
+    int numberOfDigits = 4;
+
+    timer = millis();
 }
 
 void loop()
 {
-    char tempString[10]; //Used for sprintf
     Wire.beginTransmission(DS1307_ADDRESS);
     Wire.write(zero);
     Wire.endTransmission();
     Wire.requestFrom(DS1307_ADDRESS, 7);
+    
     int segundos = ConverteparaDecimal(Wire.read());
     int minutos = ConverteparaDecimal(Wire.read());
     int horas = ConverteparaDecimal(Wire.read() & 0b111111);
 
+    led.setDigit(DisplayCi, 0, horas / 10, 0);
+    led.setDigit(DisplayCi, 1, horas % 10, 0);
+    led.setDigit(DisplayCi, 2, minutos / 10, 0);
+    led.setDigit(DisplayCi, 3, minutos % 10, 0);
+    led.setDigit(DisplayCi, 4, segundos / 10, 0);
+    led.setDigit(DisplayCi, 5, segundos % 10, 0);
 }
 
 void SelecionaDataeHora() //Seta a data e a hora do DS1307
@@ -50,19 +59,11 @@ void SelecionaDataeHora() //Seta a data e a hora do DS1307
 
     //As linhas abaixo escrevem no CI os valores de
     //data e hora que foram colocados nas variaveis acima
-    Wire.write(ConverteParaBCD(segundos)); //Pega o tempo do módulo RTC
+    Wire.write(ConverteParaBCD(segundos));
     Wire.write(ConverteParaBCD(minutos));
     Wire.write(ConverteParaBCD(horas));
     Wire.write(zero);
     Wire.endTransmission();
-
-    //desenha a hora na tela/Display
-    led.setDigit(CI, 0, horas / 10, 0);
-    led.setDigit(CI, 1, horas % 10, 0);
-    led.setDigit(CI, 2, minutos / 10, 0);
-    led.setDigit(CI, 3, minutos % 10, 0);
-    led.setDigit(CI, 4, segundos / 10, 0);
-    led.setDigit(CI, 5, segundos % 10, 0);
 }
 
 byte ConverteParaBCD(byte val)
