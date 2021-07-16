@@ -2,13 +2,12 @@
 
 #include "Wire.h"
 #include <LedControl.h>
+#define DS1307_ADDRESS 0x68
 
 LedControl led(A3, A1, A2, 1);
 const byte DisplayCi = 0, ButtonSet = 2, ButtonUp = 3, ButtonDown = 4, Speaker = 5;
 
-#define DS1307_ADDRESS 0x68
-
-int valor = 0;
+//int valor = 0;
 
 byte zero = 0x00;
 unsigned long timer;
